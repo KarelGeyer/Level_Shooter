@@ -34,6 +34,11 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 		void OnKeyUp(const FKey& Key);
 
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<class ALever> LeverClass;
+
+	ALever* Lever;
+
 	bool IsWalkingForwards = false;
 	bool IsWalkingBackwards = false;
 	bool IsJumping = false;
@@ -45,6 +50,9 @@ private:
 	void Run();
 	void StopRunning();
 	void Animate();
+	bool RayCastTrace(FHitResult& Hit, FVector& ShotDirection);
+	void Interact();
+	void InteractWithLever();
 
 protected:
 	// Called when the game starts or when spawned

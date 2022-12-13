@@ -2,6 +2,7 @@
 
 
 #include "PlayerCharacter.h"
+#include "Lever.h"
 #include "GameFramework/Character.h"
 #include <Kismet/GameplayStatics.h>
 #include "GameFramework/CharacterMovementComponent.h"
@@ -17,6 +18,8 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Lever = Cast<ALever>(UGameplayStatics::GetActorOfClass(GetWorld(), ALever::StaticClass()));
 }
 
 // Called every frame
@@ -36,6 +39,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis(TEXT("Move_Right"), this, &APlayerCharacter::Rotate);
 	PlayerInputComponent->BindAxis(TEXT("Look_Up"), this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis(TEXT("Look_Right"), this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &APlayerCharacter::Interact);
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Pressed, this, &APlayerCharacter::Run);
 	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Released, this, &APlayerCharacter::StopRunning);
@@ -68,6 +72,38 @@ void APlayerCharacter::StopRunning()
 	Speed = 200;
 }
 
+
+bool APlayerCharacter::RayCastTrace(FHitResult& Hit, FVector& ShotDirection)
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+
+	if (PlayerController == nullptr) {
+		return false;
+	}
+
+	FVector Location;
+	FRotator Rotation;
+	PlayerController->GetPlayerViewPoint(Location, Rotation);
+	ShotDirection = -Rotation.Vector();
+
+	FVector End = Location + Rotation.Vector() * 800;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	return GetWorld()->LineTraceSingleByChannel(Hit, Location, End, ECollisionChannel::ECC_GameTraceChannel1, Params);
+}
+
+void APlayerCharacter::Interact()
+{
+	if (Lever->isPlayerInRange()) {
+		InteractWithLever();
+	}
+}
+
+void APlayerCharacter::InteractWithLever()
+{
+	Lever->OnPlayerInteraction();
+}
+
 void APlayerCharacter::Animate()
 {
 	if (CanJump()) {
@@ -94,6 +130,7 @@ void APlayerCharacter::Animate()
 		SpeedAnimation = 0.f;
 	}
 }
+
 
 void APlayerCharacter::OnKeyDown(const FKey& Key) {
 	if (Key == EKeys::W)
