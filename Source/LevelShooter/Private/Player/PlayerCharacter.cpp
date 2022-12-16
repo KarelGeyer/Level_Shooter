@@ -1,0 +1,223 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Player/PlayerCharacter.h"
+#include "InteractableItems/Lever.h"
+#include "InteractableItems/Teleport.h"
+#include "GameFramework/Character.h"
+#include <Kismet/GameplayStatics.h>
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/BoxComponent.h"
+#include <Subsystems/PanelExtensionSubsystem.h>
+#include "Blueprint/UserWidget.h"
+
+// Sets default values
+APlayerCharacter::APlayerCharacter()
+{
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
+	InteractionBox->SetupAttachment(RootComponent);
+}
+
+// Called when the game starts or when spawned
+void APlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnBeginOverlap);
+	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnEndOverlap);
+}
+
+// Called every frame
+void APlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	Animate();
+}
+
+// Called to bind functionality to input
+void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAxis(TEXT("Move_Forward"), this, &APlayerCharacter::Move);
+	PlayerInputComponent->BindAxis(TEXT("Move_Right"), this, &APlayerCharacter::Rotate);
+	PlayerInputComponent->BindAxis(TEXT("Look_Up"), this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis(TEXT("Look_Right"), this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &APlayerCharacter::Interact);
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Pressed, this, &APlayerCharacter::Run);
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Released, this, &APlayerCharacter::StopRunning);
+}
+
+
+void APlayerCharacter::Move(float Value)
+{
+	FVector CharLocation = FVector::ZeroVector;
+	CharLocation.X = Value * UGameplayStatics::GetWorldDeltaSeconds(this) * Speed;
+	AddActorLocalOffset(CharLocation, true);
+}
+
+void APlayerCharacter::Rotate(float Value)
+{
+	FVector CharRotation = FVector::ZeroVector;
+	CharRotation.Y = Value * UGameplayStatics::GetWorldDeltaSeconds(this) * Speed;
+	AddActorLocalOffset(CharRotation, true);
+}
+
+void APlayerCharacter::Run()
+{
+	if (bIsWalkingForwards) {
+		Speed = 600;
+	}
+}
+
+void APlayerCharacter::StopRunning()
+{
+	Speed = 200;
+}
+
+bool APlayerCharacter::RayCastTrace(FHitResult& Hit, FVector& ShotDirection)
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+
+	if (PlayerController == nullptr) {
+		return false;
+	}
+
+	FVector Location;
+	FRotator Rotation;
+	PlayerController->GetPlayerViewPoint(Location, Rotation);
+	ShotDirection = -Rotation.Vector();
+
+	FVector End = Location + Rotation.Vector() * 800;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	return GetWorld()->LineTraceSingleByChannel(Hit, Location, End, ECollisionChannel::ECC_GameTraceChannel1, Params);
+}
+
+void APlayerCharacter::Interact()
+{
+	if (InteractiveObjectName.IsEmpty()) {
+		UE_LOG(LogTemp, Warning, TEXT("No object to interact with"));
+	}
+
+	if (InteractiveObjectName.Equals("Lever")) {
+		Lever->OnPlayerInteraction();
+	}
+
+	if (InteractiveObjectName.Equals("Teleport")) {
+		Teleport->OnPlayerInteraction();
+	}
+}
+
+void APlayerCharacter::ManageInteractionWidget(bool bShouldBeVisible)
+{
+	if (InteractionWidgetClass) {
+		if (bShouldBeVisible) {
+			InteractionWidget = CreateWidget<UUserWidget>(GetWorld(), InteractionWidgetClass);
+
+			if (InteractionWidget)
+			{
+				InteractionWidget->AddToViewport();
+			}
+		}
+		else {
+			InteractionWidget->RemoveFromViewport();
+		}
+	}
+}
+
+void APlayerCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor == nullptr) {
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Overlapped with %s"), *OtherActor->GetName());
+
+	// This actually get the instance of the classes, that is how this code actually works
+	Lever = Cast<ALever>(OtherActor);
+	Teleport = Cast<ATeleport>(OtherActor);
+
+	if (Lever == nullptr && Teleport == nullptr) {
+		return;
+	}
+
+	InteractiveObjectName = OtherActor->GetActorLabel();
+
+	if (Lever || Teleport) {
+		ManageInteractionWidget(true);
+	}
+}
+
+void APlayerCharacter::OnEndOverlap(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (Lever || Teleport) {
+		ManageInteractionWidget(false);
+		InteractiveObjectName.Empty();
+	}
+}
+
+void APlayerCharacter::Animate()
+{
+	if (CanJump()) {
+		if (bIsWalkingForwards && !bIsRunning) {
+			SpeedAnimation = 50.f;
+			DirectionAnimation = 100.f;
+		}
+
+		if (bIsWalkingForwards && bIsRunning) {
+			SpeedAnimation = 100.f;
+			DirectionAnimation = 100.f;
+		}
+
+		if (bIsWalkingBackwards) {
+			SpeedAnimation = 50.f;
+			DirectionAnimation = 0.f;
+		}
+	}
+	else {
+		SpeedAnimation = 0.f;
+	}
+
+	if (!bIsWalkingForwards && !bIsWalkingBackwards) {
+		SpeedAnimation = 0.f;
+	}
+}
+
+void APlayerCharacter::OnKeyDown(const FKey& Key) {
+	if (Key == EKeys::W)
+	{
+		bIsWalkingForwards = true;
+	}
+
+	if (Key == EKeys::S)
+	{
+		bIsWalkingBackwards = true;
+	}
+
+	if (Key == EKeys::LeftShift) {
+		bIsRunning = true;
+	}
+}
+
+void APlayerCharacter::OnKeyUp(const FKey& Key)
+{
+	if (Key == EKeys::W)
+	{
+		bIsWalkingForwards = false;
+	}
+
+	if (Key == EKeys::S)
+	{
+		bIsWalkingBackwards = false;
+	}
+
+	if (Key == EKeys::LeftShift) {
+		bIsRunning = false;
+	}
+}
