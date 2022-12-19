@@ -137,8 +137,6 @@ void APlayerCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Overlapped with %s"), *OtherActor->GetName());
-
 	// This actually get the instance of the classes, that is how this code actually works
 	Lever = Cast<ALever>(OtherActor);
 	Teleport = Cast<ATeleport>(OtherActor);
