@@ -3,32 +3,45 @@
 
 #include "Enemy/EnemyCharacter.h"
 
-// Sets default values
 AEnemyCharacter::AEnemyCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
-// Called when the game starts or when spawned
 void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-// Called every frame
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	ManageAnimation();
 }
 
-// Called to bind functionality to input
 void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
 
+bool AEnemyCharacter::IsMoving()
+{
+	FVector Velocity = GetVelocity();
+	double Movement = Velocity.SizeSquared();
+
+	return Movement > 0;
+}
+
+void AEnemyCharacter::ManageAnimation()
+{
+	if (IsMoving()) {
+		EnemySpeedAnimation = 100;
+		EnemyAngleAnimation = 50;
+	}
+	else {
+		EnemySpeedAnimation = 25;
+		EnemyAngleAnimation = 50;
+	}
 }
 

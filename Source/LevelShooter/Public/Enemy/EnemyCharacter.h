@@ -19,11 +19,17 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
+public:
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+		float EnemySpeedAnimation = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+		float EnemyAngleAnimation = 0.f;
+
+private:
+	bool IsMoving();
+	void ManageAnimation();
 };

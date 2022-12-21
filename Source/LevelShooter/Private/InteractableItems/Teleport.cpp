@@ -6,8 +6,6 @@
 #include "Player/PlayerCharacter.h"
 #include "Components/BoxComponent.h"
 
-
-// Sets default values
 ATeleport::ATeleport()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -36,7 +34,10 @@ void ATeleport::Tick(float DeltaTime)
 
 void ATeleport::OnPlayerInteraction()
 {
-	Player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	Player->SetActorLocation(TeleportLocation);
+	Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (Player != nullptr)
+	{
+		Player->SetActorLocation(TeleportLocation);
+	}
 }
 

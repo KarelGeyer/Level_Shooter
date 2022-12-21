@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Teleport.generated.h"
 
-class APlayerCharacter;
+class APawn;
 class UBoxComponent;
 
 UCLASS()
@@ -23,7 +23,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	APlayerCharacter* Player;
+	APawn* Player;
 
 public:
 	// Called every frame

@@ -22,7 +22,12 @@ public:
 
 private:
 	APawn* PlayerPawn;
+	FVector PatrolLocation;
+	FVector IntialPositon;
 
 	UPROPERTY(EditAnywhere)
 		UBehaviorTree* AIBehavior;
+
+	void Chase();
+	FNavLocation GetRandomPoint();
 };
