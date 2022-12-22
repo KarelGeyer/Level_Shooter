@@ -11,17 +11,14 @@
 #include <Subsystems/PanelExtensionSubsystem.h>
 #include "Blueprint/UserWidget.h"
 
-// Sets default values
 APlayerCharacter::APlayerCharacter()
 {
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
 	InteractionBox->SetupAttachment(RootComponent);
 }
 
-// Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -30,7 +27,6 @@ void APlayerCharacter::BeginPlay()
 	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnEndOverlap);
 }
 
-// Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -38,7 +34,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	Animate();
 }
 
-// Called to bind functionality to input
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -113,6 +108,34 @@ void APlayerCharacter::Interact()
 		Teleport->OnPlayerInteraction();
 	}
 }
+
+void APlayerCharacter::SetPlayersHealth(HealthType Type, float Value)
+{
+	if (Type == HealthType::Heal && Health < 100) {
+		Health += Value;
+
+		if (Health > 100) {
+			Health = 100.f;
+		}
+	}
+
+	if (Type == HealthType::Damage) {
+		Health -= Value;
+
+		if (Health < 0) {
+			Health = 0;
+			PlayerDeath();
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Health: %f"), Health);
+}
+
+void APlayerCharacter::PlayerDeath()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Player Died"));
+}
+
 
 void APlayerCharacter::ManageInteractionWidget(bool bShouldBeVisible)
 {

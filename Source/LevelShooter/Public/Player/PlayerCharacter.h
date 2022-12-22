@@ -14,6 +14,11 @@ class UUserWidget;
 class ATeleport;
 class ALever;
 
+enum class HealthType {
+	Heal,
+	Damage
+};
+
 UCLASS()
 class LEVELSHOOTER_API APlayerCharacter : public ACharacter
 {
@@ -27,6 +32,11 @@ public:
 		float SpeedAnimation = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 		float DirectionAnimation = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+		float Health = 100.f;
+
+	void SetPlayersHealth(HealthType Type, float Value);
 
 private:
 	// UProperties
@@ -70,6 +80,7 @@ private:
 	void ManageInteractionWidget(bool bShouldBeVisible);
 	bool RayCastTrace(FHitResult& Hit, FVector& ShotDirection);
 	void Interact();
+	void PlayerDeath();
 
 protected:
 	// Called when the game starts or when spawned

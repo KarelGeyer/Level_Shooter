@@ -1,4 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -6,9 +5,9 @@
 #include "AIController.h"
 #include "EnemyAIController.generated.h"
 
-/**
- *
- */
+class AEnemyCharacter;
+class UCharacterMovementComponent;
+
 UCLASS()
 class LEVELSHOOTER_API AEnemyAIController : public AAIController
 {
@@ -20,14 +19,21 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI")
+		FVector PatrolLocation;
+
 private:
 	APawn* PlayerPawn;
-	FVector PatrolLocation;
 	FVector IntialPositon;
+	AEnemyCharacter* EnemyCharacter;
+	UCharacterMovementComponent* MovementComp;
+	float MaxSpeed;
 
 	UPROPERTY(EditAnywhere)
 		UBehaviorTree* AIBehavior;
 
+	void RunAndInitAI();
 	void Chase();
-	FNavLocation GetRandomPoint();
+	void Attack();
+	float GetDistanceToPlayer();
 };

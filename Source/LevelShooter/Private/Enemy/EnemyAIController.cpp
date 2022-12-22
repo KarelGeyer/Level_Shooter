@@ -6,22 +6,16 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Enemy/EnemyCharacter.h"
 #include <NavigationSystem.h>
+#include "Enemy/EnemyCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void AEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
 	PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	PatrolLocation = GetRandomPoint();
-	IntialPositon = GetPawn()->GetActorLocation();
 
-	SetFocus(PlayerPawn);
-
-	if (AIBehavior) {
-		RunBehaviorTree(AIBehavior);
-		GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolLocation"), PatrolLocation);
-		GetBlackboardComponent()->SetValueAsVector(TEXT("InitialPosition"), IntialPositon);
-	}
+	RunAndInitAI();
 }
 
 void AEnemyAIController::Tick(float DeltaTime)
@@ -29,37 +23,52 @@ void AEnemyAIController::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	Chase();
+	Attack();;
+}
+
+void AEnemyAIController::RunAndInitAI()
+{
+	if (AIBehavior) {
+		RunBehaviorTree(AIBehavior);
+
+		EnemyCharacter = Cast<AEnemyCharacter>(GetPawn());
+		MovementComp = EnemyCharacter->GetCharacterMovement();
+
+		if (EnemyCharacter)
+		{
+			GetBlackboardComponent()->SetValueAsVector(TEXT("PatrolLocation"), EnemyCharacter->PatrolLocation);
+		}
+
+		GetBlackboardComponent()->SetValueAsVector(TEXT("InitialPosition"), GetPawn()->GetActorLocation());
+		GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttacking"), false);
+	}
 }
 
 void AEnemyAIController::Chase()
 {
-	FVector Location = GetPawn()->GetActorLocation();
-	FVector PlayerLocation = PlayerPawn->GetActorLocation();
-	float DistanceToPlayer = FVector::Dist(Location, PlayerLocation);
+	if (GetDistanceToPlayer() < 1500 && LineOfSightTo(PlayerPawn)) {
+		SetFocus(PlayerPawn);
 
-	if (DistanceToPlayer < 1500 && LineOfSightTo(PlayerPawn)) {
+		MovementComp->MaxWalkSpeed = 400.f;
+
 		GetBlackboardComponent()->SetValueAsVector(TEXT("PlayerLocation"), PlayerPawn->GetActorLocation());
 		GetBlackboardComponent()->SetValueAsVector(TEXT("LastKnownPlayerLocation"), PlayerPawn->GetActorLocation());
 	}
 	else {
 		GetBlackboardComponent()->ClearValue(TEXT("PlayerLocation"));
+		MovementComp->MaxWalkSpeed = 200.f;
 	}
 }
 
-FNavLocation AEnemyAIController::GetRandomPoint()
+void AEnemyAIController::Attack()
 {
-	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
-	float Radius = 1500.0f;
-	FNavLocation RandomLocation;
-	bool bLocationFound = NavSys->GetRandomReachablePointInRadius(IntialPositon, Radius, RandomLocation);
+	GetBlackboardComponent()->SetValueAsBool(TEXT("IsAttacking"), GetDistanceToPlayer() < 150);
+}
 
-	if (bLocationFound)
-	{
-		return RandomLocation;
-	}
-	else
-	{
-		return FNavLocation();
-	}
+float AEnemyAIController::GetDistanceToPlayer()
+{
+	FVector Location = GetPawn()->GetActorLocation();
+	FVector PlayerLocation = PlayerPawn->GetActorLocation();
 
+	return FVector::Dist(Location, PlayerLocation);
 }

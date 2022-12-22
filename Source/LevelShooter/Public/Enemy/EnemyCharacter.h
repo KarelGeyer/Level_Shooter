@@ -6,30 +6,60 @@
 #include "GameFramework/Character.h"
 #include "EnemyCharacter.generated.h"
 
+class APlayerCharacter;
+class UCharacterMovementComponent;
+
 UCLASS()
 class LEVELSHOOTER_API AEnemyCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AEnemyCharacter();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 		float EnemySpeedAnimation = 0.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 		float EnemyAngleAnimation = 0.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+		bool IsAttacking = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+		float AttackAngle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+		float AttackSide;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI")
+		FVector PatrolLocation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+		USkeletalMeshComponent* Skeleton;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+		USkeletalMeshComponent* WeaponComponent;
+
 private:
+	APlayerCharacter* Player;
+	FTimerHandle TimerHandle;
+	UCharacterMovementComponent* MovementComp;
+
+
 	bool IsMoving();
 	void ManageAnimation();
+	float GetDistanceToPlayer();
+	void ManageAttackAnimation();
+	void ManageRotation();
+
+	UFUNCTION()
+		void OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 };
