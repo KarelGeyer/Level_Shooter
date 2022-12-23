@@ -8,7 +8,7 @@ AEnemyCharacter::AEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	Skeleton = GetMesh();
+	USkeletalMeshComponent* Skeleton = GetMesh();
 	WeaponComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponComponent"));
 	WeaponComponent->AttachToComponent(Skeleton, FAttachmentTransformRules::KeepWorldTransform, TEXT("Weapon_Socket"));
 	MovementComp = GetCharacterMovement();
@@ -26,7 +26,6 @@ void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	ManageAnimation();
 	ManageRotation();
 }
 
@@ -38,25 +37,13 @@ bool AEnemyCharacter::IsMoving()
 	return Movement > 0;
 }
 
-void AEnemyCharacter::ManageAnimation()
+void AEnemyCharacter::ManageAnimation(float EnemySpeedAnimationSetter, bool bIsWeaponVisibleSetter, bool bIsAttackingSetter, float MovementSpeedSetter)
 {
-	if (IsMoving()) {
-		EnemySpeedAnimation = 100;
-		IsAttacking = false;
-	}
-
-	if (!IsMoving() && GetDistanceToPlayer() < 150) {
-		IsAttacking = true;
-		EnemySpeedAnimation = 25;
-	}
-
-	if (!IsMoving() && GetDistanceToPlayer() > 150) {
-		IsAttacking = false;
-		EnemySpeedAnimation = 25;
-	}
-
+	EnemySpeedAnimation = EnemySpeedAnimationSetter;
+	IsAttacking = bIsAttackingSetter;
+	MovementComp->MaxWalkSpeed = MovementSpeedSetter;
+	WeaponComponent->SetVisibility(bIsWeaponVisibleSetter);
 	EnemyAngleAnimation = 50;
-	WeaponComponent->SetVisibility(IsMoving() || GetDistanceToPlayer() < 150 || IsAttacking);
 }
 
 void AEnemyCharacter::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

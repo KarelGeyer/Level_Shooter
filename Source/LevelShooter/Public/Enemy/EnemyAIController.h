@@ -26,7 +26,6 @@ private:
 	APawn* PlayerPawn;
 	FVector IntialPositon;
 	AEnemyCharacter* EnemyCharacter;
-	UCharacterMovementComponent* MovementComp;
 	float MaxSpeed;
 
 	UPROPERTY(EditAnywhere)
@@ -34,6 +33,4 @@ private:
 
 	void RunAndInitAI();
 	void Chase();
-	void Attack();
-	float GetDistanceToPlayer();
 };

@@ -13,6 +13,7 @@ class IInteractionInterface;
 class UUserWidget;
 class ATeleport;
 class ALever;
+class ABullet;
 
 enum class HealthType {
 	Heal,
@@ -36,6 +37,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 		float Health = 100.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+		USkeletalMeshComponent* WeaponComponent;
+
 	void SetPlayersHealth(HealthType Type, float Value);
 
 private:
@@ -47,7 +51,13 @@ private:
 		UBoxComponent* InteractionBox;
 
 	UPROPERTY(EditAnywhere)
+		USceneComponent* BulletSpawnPoint;
+
+	UPROPERTY(EditAnywhere)
 		TSubclassOf<UUserWidget> InteractionWidgetClass;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+		TSubclassOf<ABullet> BulletClass;
 
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 		void OnKeyDown(const FKey& Key);
@@ -66,8 +76,11 @@ private:
 	UUserWidget* InteractionWidget;
 	FString InteractiveObjectName;
 
+
 	bool bIsWalkingForwards = false;
 	bool bIsWalkingBackwards = false;
+	bool bIsWalkingRight = false;
+	bool bIsWalkingLeft = false;
 	bool bIsJumping = false;
 	bool bIsRunning = false;
 
@@ -81,6 +94,7 @@ private:
 	bool RayCastTrace(FHitResult& Hit, FVector& ShotDirection);
 	void Interact();
 	void PlayerDeath();
+	void Shoot();
 
 protected:
 	// Called when the game starts or when spawned

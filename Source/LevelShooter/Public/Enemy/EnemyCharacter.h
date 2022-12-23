@@ -42,20 +42,17 @@ public:
 		FVector PatrolLocation;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-		USkeletalMeshComponent* Skeleton;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 		USkeletalMeshComponent* WeaponComponent;
+
+	bool IsMoving();
+	float GetDistanceToPlayer();
+	void ManageAnimation(float EnemySpeedAnimationSetter, bool bIsWeaponVisibleSetter = false, bool bIsAttackingSetter = false, float MovementSpeedSetter = 130.f);
 
 private:
 	APlayerCharacter* Player;
 	FTimerHandle TimerHandle;
 	UCharacterMovementComponent* MovementComp;
 
-
-	bool IsMoving();
-	void ManageAnimation();
-	float GetDistanceToPlayer();
 	void ManageAttackAnimation();
 	void ManageRotation();
 

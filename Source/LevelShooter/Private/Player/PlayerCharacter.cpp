@@ -10,6 +10,7 @@
 #include "Components/BoxComponent.h"
 #include <Subsystems/PanelExtensionSubsystem.h>
 #include "Blueprint/UserWidget.h"
+#include "InteractableItems/Bullet.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -17,6 +18,14 @@ APlayerCharacter::APlayerCharacter()
 
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
 	InteractionBox->SetupAttachment(RootComponent);
+
+	USkeletalMeshComponent* Skeleton = GetMesh();
+
+	WeaponComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponComponent"));
+	WeaponComponent->AttachToComponent(Skeleton, FAttachmentTransformRules::KeepWorldTransform, TEXT("Weapon_Socket"));
+
+	BulletSpawnPoint = CreateDefaultSubobject<USceneComponent>(TEXT("BulletSpawnPoint"));
+	BulletSpawnPoint->AttachToComponent(Skeleton, FAttachmentTransformRules::KeepWorldTransform, TEXT("Weapon_Socket"));
 }
 
 void APlayerCharacter::BeginPlay()
@@ -46,8 +55,18 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Pressed, this, &APlayerCharacter::Run);
 	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Released, this, &APlayerCharacter::StopRunning);
+	PlayerInputComponent->BindAction(TEXT("Shoot"), IE_Pressed, this, &APlayerCharacter::Shoot);
 }
 
+void APlayerCharacter::Shoot()
+{
+	FVector SpawnLocation = BulletSpawnPoint->GetComponentLocation();
+	FRotator SpawnRotation = BulletSpawnPoint->GetComponentRotation();
+
+	ABullet* Projectile = GetWorld()->SpawnActor<ABullet>(BulletClass, SpawnLocation, SpawnRotation);
+
+	Projectile->SetOwner(this);
+}
 
 void APlayerCharacter::Move(float Value)
 {
@@ -66,6 +85,10 @@ void APlayerCharacter::Rotate(float Value)
 void APlayerCharacter::Run()
 {
 	if (bIsWalkingForwards) {
+		if (bIsWalkingLeft || bIsWalkingRight) {
+			Speed = 200;
+		}
+
 		Speed = 600;
 	}
 }
@@ -186,27 +209,36 @@ void APlayerCharacter::OnEndOverlap(class UPrimitiveComponent* OverlappedComp, c
 void APlayerCharacter::Animate()
 {
 	if (CanJump()) {
-		if (bIsWalkingForwards && !bIsRunning) {
-			SpeedAnimation = 50.f;
-			DirectionAnimation = 100.f;
-		}
-
-		if (bIsWalkingForwards && bIsRunning) {
-			SpeedAnimation = 100.f;
-			DirectionAnimation = 100.f;
+		if (bIsWalkingForwards) {
+			if (!bIsRunning) {
+				SpeedAnimation = 66.6f;
+				DirectionAnimation = 50.f;
+			}
+			else {
+				SpeedAnimation = 100.f;
+				DirectionAnimation = 50.f;
+			}
 		}
 
 		if (bIsWalkingBackwards) {
-			SpeedAnimation = 50.f;
+			SpeedAnimation = 0.f;
+			DirectionAnimation = 50.f;
+		}
+
+		if (bIsWalkingRight) {
+			DirectionAnimation = 100.f;
+		}
+
+		if (bIsWalkingLeft) {
 			DirectionAnimation = 0.f;
 		}
 	}
 	else {
-		SpeedAnimation = 0.f;
+		SpeedAnimation = 33.3f;
 	}
 
-	if (!bIsWalkingForwards && !bIsWalkingBackwards) {
-		SpeedAnimation = 0.f;
+	if (!bIsWalkingForwards && !bIsWalkingBackwards && !bIsWalkingRight && !bIsWalkingLeft) {
+		SpeedAnimation = 33.3f;
 	}
 }
 
@@ -224,6 +256,14 @@ void APlayerCharacter::OnKeyDown(const FKey& Key) {
 	if (Key == EKeys::LeftShift) {
 		bIsRunning = true;
 	}
+
+	if (Key == EKeys::A) {
+		bIsWalkingRight = true;
+	}
+
+	if (Key == EKeys::D) {
+		bIsWalkingLeft = true;
+	}
 }
 
 void APlayerCharacter::OnKeyUp(const FKey& Key)
@@ -240,5 +280,13 @@ void APlayerCharacter::OnKeyUp(const FKey& Key)
 
 	if (Key == EKeys::LeftShift) {
 		bIsRunning = false;
+	}
+
+	if (Key == EKeys::A) {
+		bIsWalkingRight = false;
+	}
+
+	if (Key == EKeys::D) {
+		bIsWalkingLeft = false;
 	}
 }
