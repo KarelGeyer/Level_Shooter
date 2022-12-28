@@ -32,6 +32,8 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SetupHUD();
+
 	InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnBeginOverlap);
 	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnEndOverlap);
 }
@@ -66,6 +68,19 @@ void APlayerCharacter::Shoot()
 	ABullet* Projectile = GetWorld()->SpawnActor<ABullet>(BulletClass, SpawnLocation, SpawnRotation);
 
 	Projectile->SetOwner(this);
+}
+
+void APlayerCharacter::SetupHUD()
+{
+	if (PlayerHUDClass) {
+		PlayerHUD = CreateWidget<UUserWidget>(GetWorld(), PlayerHUDClass);
+		PlayerHUD->AddToViewport();
+	}
+}
+
+float APlayerCharacter::GetHealtBarValue() const
+{
+	return Health / 100;
 }
 
 void APlayerCharacter::Move(float Value)
@@ -150,8 +165,26 @@ void APlayerCharacter::SetPlayersHealth(HealthType Type, float Value)
 			PlayerDeath();
 		}
 	}
+}
 
-	UE_LOG(LogTemp, Warning, TEXT("Health: %f"), Health);
+void APlayerCharacter::SetCollectedCrystals()
+{
+	CollectedCrystals++;
+}
+
+void APlayerCharacter::SetHealth(float Value)
+{
+	if (Health + Value > 100) {
+		Health = 100;
+	}
+	else {
+		Health += Value;
+	}
+}
+
+int32 APlayerCharacter::GetCollectedCrystals() const
+{
+	return CollectedCrystals;
 }
 
 void APlayerCharacter::PlayerDeath()

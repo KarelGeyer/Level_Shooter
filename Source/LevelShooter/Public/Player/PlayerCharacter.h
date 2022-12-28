@@ -26,8 +26,9 @@ class LEVELSHOOTER_API APlayerCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	APlayerCharacter();
+
+	static const int32 Damage = 25;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 		float SpeedAnimation = 0.f;
@@ -40,10 +41,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 		USkeletalMeshComponent* WeaponComponent;
 
+	UFUNCTION(BlueprintPure, Category = "HUD")
+		float GetHealtBarValue() const;
+
+	UFUNCTION(BlueprintPure, Category = "HUD")
+		int32 GetCollectedCrystals() const;
+
 	void SetPlayersHealth(HealthType Type, float Value);
+	void SetCollectedCrystals();
+	void SetHealth(float Value);
 
 private:
-	// UProperties
+	int32 CollectedCrystals = 0;
+
 	UPROPERTY(EditInstanceOnly, Category = "Movement")
 		float Speed = 180.f;
 
@@ -55,6 +65,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 		TSubclassOf<UUserWidget> InteractionWidgetClass;
+
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<UUserWidget> PlayerHUDClass;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 		TSubclassOf<ABullet> BulletClass;
@@ -74,6 +87,7 @@ private:
 	ALever* Lever;
 	ATeleport* Teleport;
 	UUserWidget* InteractionWidget;
+	UUserWidget* PlayerHUD;
 	FString InteractiveObjectName;
 
 
@@ -95,6 +109,7 @@ private:
 	void Interact();
 	void PlayerDeath();
 	void Shoot();
+	void SetupHUD();
 
 protected:
 	// Called when the game starts or when spawned

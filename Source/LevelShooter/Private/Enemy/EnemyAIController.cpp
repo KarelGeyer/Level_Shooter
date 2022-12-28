@@ -22,7 +22,15 @@ void AEnemyAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	Chase();
+	if (EnemyCharacter->IsDead)
+	{
+		// ClearFocus(2);
+		StopMovement();
+	}
+	else {
+		Chase();
+	}
+
 }
 
 void AEnemyAIController::RunAndInitAI()

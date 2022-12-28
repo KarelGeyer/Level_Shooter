@@ -19,7 +19,9 @@ void AEnemyCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	WeaponComponent->OnComponentBeginOverlap.AddDynamic(this, &AEnemyCharacter::OnWeaponOverlap);
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AEnemyCharacter::ManageAttackAnimation, 2.2f, true);
+
+	FTimerHandle AttackTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, this, &AEnemyCharacter::ManageAttackAnimation, 2.8f, true);
 }
 
 void AEnemyCharacter::Tick(float DeltaTime)
@@ -27,6 +29,18 @@ void AEnemyCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	ManageRotation();
+
+	if (Health <= 0) {
+		IsDead = true;
+
+		FTimerHandle DeadTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(DeadTimerHandle, this, &AEnemyCharacter::DestroyEnemy, 4.0f, false);
+	}
+}
+
+void AEnemyCharacter::SetEnemyHealth(float Value)
+{
+	Health -= Value;
 }
 
 bool AEnemyCharacter::IsMoving()
@@ -82,5 +96,10 @@ void AEnemyCharacter::ManageRotation()
 		FRotator NewRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), GetActorLocation() + GetVelocity());
 		SetActorRotation(NewRotation);
 	}
+}
+
+void AEnemyCharacter::DestroyEnemy()
+{
+	Destroy();
 }
 

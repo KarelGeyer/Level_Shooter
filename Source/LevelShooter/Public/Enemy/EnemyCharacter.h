@@ -41,20 +41,27 @@ public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI")
 		FVector PatrolLocation;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+		bool IsDead = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 		USkeletalMeshComponent* WeaponComponent;
 
+
+	void SetEnemyHealth(float Value);
 	bool IsMoving();
 	float GetDistanceToPlayer();
 	void ManageAnimation(float EnemySpeedAnimationSetter, bool bIsWeaponVisibleSetter = false, bool bIsAttackingSetter = false, float MovementSpeedSetter = 130.f);
 
 private:
+	float Health = 100.f;
+
 	APlayerCharacter* Player;
-	FTimerHandle TimerHandle;
 	UCharacterMovementComponent* MovementComp;
 
 	void ManageAttackAnimation();
 	void ManageRotation();
+	void DestroyEnemy();
 
 	UFUNCTION()
 		void OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
